@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Entry {
+  id           Int      @id @default(autoincrement())
+  rank         Int
+  title        String
+  points       Int
+  commentCount Int
+  /// Shared by every row of one crawl batch; doubles as the staleness signal.
+  crawledAt    DateTime
+
+  @@index([crawledAt])
+}
+
+model UsageLog {
+  id             Int      @id @default(autoincrement())
+  timestamp      DateTime @default(now())
+  appliedFilter  String
+  resultCount    Int
+  durationMs     Int
+  triggeredCrawl Boolean
+}

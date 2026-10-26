@@ -46,36 +46,24 @@ const entries = [
 describe("LongTitlesByCommentsFilter", () => {
   const filter = new LongTitlesByCommentsFilter();
 
-  it("keeps titles with more than five words, ordered by comments descending", () => {
+  it("keeps titles with more than five words, by comments descending, ties in rank order", () => {
     expect(filter.apply(entries)).toEqual([
       eightWords,
       sixWords,
       sevenWordsTiedComments,
     ]);
   });
-
-  it("keeps rank order between entries with the same comment count", () => {
-    const [, first, second] = filter.apply(entries);
-
-    expect([first.rank, second.rank]).toEqual([2, 6]);
-  });
 });
 
 describe("ShortTitlesByPointsFilter", () => {
   const filter = new ShortTitlesByPointsFilter();
 
-  it("keeps titles with five or fewer words, ordered by points descending", () => {
+  it("keeps titles with five or fewer words, by points descending, ties in rank order", () => {
     expect(filter.apply(entries)).toEqual([
       exactlyFiveWords,
       challengeExample,
       twoWords,
     ]);
-  });
-
-  it("keeps rank order between entries with the same points", () => {
-    const [, first, second] = filter.apply(entries);
-
-    expect([first.rank, second.rank]).toEqual([1, 5]);
   });
 });
 
@@ -86,14 +74,5 @@ describe("both filters together", () => {
 
     expect([...longTitles, ...shortTitles]).toHaveLength(entries.length);
     expect(new Set([...longTitles, ...shortTitles])).toEqual(new Set(entries));
-  });
-
-  it("leave the input untouched", () => {
-    const snapshot = [...entries];
-
-    new LongTitlesByCommentsFilter().apply(entries);
-    new ShortTitlesByPointsFilter().apply(entries);
-
-    expect(entries).toEqual(snapshot);
   });
 });

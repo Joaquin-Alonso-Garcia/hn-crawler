@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { EntrySourceError } from "@/src/domain/entry-source";
 import { HackerNewsEntrySource } from "@/src/infrastructure/scraper/hacker-news-entry-source";
 
 const fixtureHtml = readFileSync(
@@ -7,10 +8,10 @@ const fixtureHtml = readFileSync(
   "utf8",
 );
 
-function stubFetchBody(body: string) {
+function stubFetchResponse(body: string, status: number) {
   vi.stubGlobal(
     "fetch",
-    vi.fn().mockResolvedValue(new Response(body, { status: 200 })),
+    vi.fn().mockResolvedValue(new Response(body, { status })),
   );
 }
 
@@ -22,7 +23,7 @@ describe("HackerNewsEntrySource", () => {
   });
 
   it("fetches and parses the front page entries", async () => {
-    stubFetchBody(fixtureHtml);
+    stubFetchResponse(fixtureHtml, 200);
 
     const entries = await source.fetchTopEntries();
 
@@ -30,9 +31,22 @@ describe("HackerNewsEntrySource", () => {
     expect(entries[0].title).toBe("Dolly Parton's Imagination Library");
   });
 
-  it("rejects a page without entries instead of returning an empty crawl", async () => {
-    stubFetchBody("<html><body>We're down for maintenance</body></html>");
+  it("reports an unreachable Hacker News as an EntrySourceError", async () => {
+    stubFetchResponse("Service Unavailable", 503);
 
-    await expect(source.fetchTopEntries()).rejects.toThrow("No entries found");
+    await expect(source.fetchTopEntries()).rejects.toBeInstanceOf(
+      EntrySourceError,
+    );
+  });
+
+  it("rejects a page without entries instead of returning an empty crawl", async () => {
+    stubFetchResponse(
+      "<html><body>We're down for maintenance</body></html>",
+      200,
+    );
+
+    await expect(source.fetchTopEntries()).rejects.toThrow(
+      new EntrySourceError("No entries found on the Hacker News front page"),
+    );
   });
 });

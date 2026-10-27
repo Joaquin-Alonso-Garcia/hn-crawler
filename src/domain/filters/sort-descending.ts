@@ -1,6 +1,6 @@
 import type { Entry } from "@/src/domain/entry";
 
-type RankingField = "points" | "commentCount";
+export type RankingField = "points" | "commentCount";
 
 export function byDescending(
   field: RankingField,

@@ -1,5 +1,6 @@
 import type { SortField } from "@/components/filter-options";
 import type { Entry } from "@/src/domain/entry";
+import type { RankingField } from "@/src/domain/filters/sort-descending";
 import { countWords } from "@/src/domain/word-count";
 
 interface EntryTableProps {
@@ -8,7 +9,7 @@ interface EntryTableProps {
 }
 
 interface NumericColumn {
-  field: Extract<SortField, "points" | "commentCount">;
+  field: RankingField;
   label: string;
 }
 

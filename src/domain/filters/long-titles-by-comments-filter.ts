@@ -4,9 +4,11 @@ import { byDescending } from "@/src/domain/filters/sort-descending";
 import { isLongTitle } from "@/src/domain/filters/title-length";
 
 export class LongTitlesByCommentsFilter implements FilterStrategy {
+  readonly sortField = "commentCount";
+
   apply(entries: readonly Entry[]): Entry[] {
     return entries
       .filter((entry) => isLongTitle(entry.title))
-      .sort(byDescending("commentCount"));
+      .sort(byDescending(this.sortField));
   }
 }

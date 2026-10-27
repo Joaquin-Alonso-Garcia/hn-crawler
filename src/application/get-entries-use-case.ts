@@ -8,6 +8,8 @@ import {
 } from "@/src/domain/filters/filter-type";
 import type { UsageLogRepository } from "@/src/domain/usage-log-repository";
 
+type EntriesLoader = Pick<FreshEntriesLoader, "load">;
+
 export interface EntriesResult {
   entries: Entry[];
   appliedFilter: AppliedFilter;
@@ -24,14 +26,14 @@ function applyFilter(entries: Entry[], filterType: FilterType | null): Entry[] {
 
 export class GetEntriesUseCase {
   constructor(
-    private readonly freshEntriesLoader: FreshEntriesLoader,
+    private readonly entriesLoader: EntriesLoader,
     private readonly usageLogRepository: UsageLogRepository,
     private readonly now: () => Date,
   ) {}
 
   async execute(filterType: FilterType | null): Promise<EntriesResult> {
     const startedAt = this.now();
-    const snapshot = await this.freshEntriesLoader.load();
+    const snapshot = await this.entriesLoader.load();
     const entries = applyFilter(snapshot.entries, filterType);
     const appliedFilter = filterType ?? NO_FILTER;
 

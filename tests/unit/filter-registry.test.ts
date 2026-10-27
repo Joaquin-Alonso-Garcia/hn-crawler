@@ -6,11 +6,17 @@ import { ShortTitlesByPointsFilter } from "@/src/domain/filters/short-titles-by-
 
 describe("getFilterStrategy", () => {
   it.each([
-    [FilterType.LongTitles, LongTitlesByCommentsFilter],
-    [FilterType.ShortTitles, ShortTitlesByPointsFilter],
-  ])("maps %s to its strategy", (filterType, strategyClass) => {
-    expect(getFilterStrategy(filterType)).toBeInstanceOf(strategyClass);
-  });
+    [FilterType.LongTitles, LongTitlesByCommentsFilter, "commentCount"],
+    [FilterType.ShortTitles, ShortTitlesByPointsFilter, "points"],
+  ])(
+    "maps %s to its strategy and sort field",
+    (filterType, strategyClass, sortField) => {
+      const strategy = getFilterStrategy(filterType);
+
+      expect(strategy).toBeInstanceOf(strategyClass);
+      expect(strategy.sortField).toBe(sortField);
+    },
+  );
 });
 
 describe("isFilterType", () => {

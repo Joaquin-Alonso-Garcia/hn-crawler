@@ -107,7 +107,7 @@ flowchart LR
 
 **Crawls fail safely.** A failed crawl leaves the stored entries untouched, and the next request retries. A page that parses to zero entries (for example, if Hacker News changes its markup) is treated as a failure, so it can't wipe the stored data.
 
-**Strategy pattern for filters.** Each filter is a class implementing `FilterStrategy.apply(entries)`. A registry typed as `Record<FilterType, FilterStrategy>` maps the query parameter to its strategy, so adding a filter means adding one value and one class, and the build fails if the class is missing. Long and short titles are defined from the same constant (`> 5` and `<= 5`), so every entry lands in exactly one filter.
+**Strategy pattern for filters.** Each filter is a class implementing `FilterStrategy`: it declares its `sortField` and applies it in `apply(entries)`, and the UI reads the same field for its sort indicator, so the two cannot disagree. A registry typed as `Record<FilterType, FilterStrategy>` maps the query parameter to its strategy. Adding a filter means adding one value, one class, and one UI label, and the build fails if the class or the label is missing. Long and short titles are defined from the same constant (`> 5` and `<= 5`), so every entry lands in exactly one filter.
 
 **Word counting.** Split on whitespace and keep tokens that contain at least one letter or digit, using Unicode classes (`\p{L}\p{N}`) so titles like `Café` or `日本語` count correctly. Hyphenated words stay single words, punctuation attached to a word keeps the word, and standalone symbols (`-`, `|`, `—`) are dropped.
 

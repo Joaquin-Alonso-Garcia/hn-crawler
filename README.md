@@ -156,4 +156,4 @@ The history is incremental: scaffold → schema → word count → scraper → r
 
 ## AI assistance
 
-I built this with Claude Code as a pair programmer. The architecture was settled through a structured interview before any code was written. Each step was then implemented test-first, reviewed by me, and committed separately. I can walk through and justify every decision in this repository.
+I built this with Claude Code as a pair programmer. The architecture was settled through a structured interview and planned before any code was written. Each step was then implemented test-first, reviewed by me, and committed separately.

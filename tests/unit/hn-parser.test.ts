@@ -66,6 +66,22 @@ describe("parseHackerNewsEntries", () => {
     ]);
   });
 
+  it('ignores an author whose username contains "comment"', () => {
+    const html = buildPage([
+      buildStoryRows(
+        1,
+        "Some story",
+        `<span class="score">120 points</span>
+         by <a href="user?id=commenter42" class="hnuser">commenter42</a>
+         | <a href="item?id=1">65&nbsp;comments</a>`,
+      ),
+    ]);
+
+    expect(parseHackerNewsEntries(html)).toEqual([
+      { rank: 1, title: "Some story", points: 120, commentCount: 65 },
+    ]);
+  });
+
   it("keeps only the first 30 entries", () => {
     const rows = Array.from(
       { length: FRONT_PAGE_ENTRY_LIMIT + 1 },

@@ -5,7 +5,7 @@ import type { Entry } from "@/src/domain/entry";
 export const FRONT_PAGE_ENTRY_LIMIT = 30;
 
 const STORY_ROW_SELECTOR = "tr.athing";
-const COMMENTS_LINK_KEYWORD = "comment";
+const COMMENTS_LINK_TEXT = /^\d+\s+comments?$/;
 const FIRST_NUMBER = /\d+/;
 
 function extractNumber(text: string): number {
@@ -14,12 +14,13 @@ function extractNumber(text: string): number {
   return match ? Number(match[0]) : 0;
 }
 
-// The comments link is matched by text because job postings have no such link,
-// and their remaining links (e.g. "3 hours ago") also contain numbers.
+// The comments link is matched by its whole text: job postings have no such link,
+// and other links can contain digits ("3 hours ago") or the word ("commenter42").
 function findCommentsText($: CheerioAPI, subtext: Cheerio<Element>): string {
   return subtext
     .find("a")
-    .filter((_, link) => $(link).text().includes(COMMENTS_LINK_KEYWORD))
+    .filter((_, link) => COMMENTS_LINK_TEXT.test($(link).text().trim()))
+    .first()
     .text();
 }
 

@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { FreshEntriesLoader } from "@/src/application/fresh-entries-loader";
+import { CRAWL_TTL_MS } from "@/src/config";
 import type { Entry } from "@/src/domain/entry";
 import { FakeClock } from "../fakes/fake-clock";
 import { InMemoryEntryRepository } from "../fakes/in-memory-entry-repository";
 
-const TTL_MS = 15 * 60 * 1000;
 const START = new Date("2026-10-26T10:00:00.000Z");
 const STORED_ENTRIES: Entry[] = [
   { rank: 1, title: "Stored story", points: 10, commentCount: 1 },
@@ -22,7 +22,12 @@ function setUp() {
       .fn<() => Promise<Entry[]>>()
       .mockResolvedValue(CRAWLED_ENTRIES),
   };
-  const loader = new FreshEntriesLoader(repository, source, clock.now, TTL_MS);
+  const loader = new FreshEntriesLoader(
+    repository,
+    source,
+    clock.now,
+    CRAWL_TTL_MS,
+  );
 
   return { clock, repository, source, loader };
 }
@@ -42,7 +47,7 @@ describe("FreshEntriesLoader", () => {
   it("serves stored entries without crawling while within the TTL", async () => {
     const { loader, source, repository, clock } = setUp();
     await repository.replaceAll(STORED_ENTRIES, START);
-    clock.advance(TTL_MS - 1);
+    clock.advance(CRAWL_TTL_MS - 1);
 
     await expect(loader.load()).resolves.toEqual({
       entries: STORED_ENTRIES,
@@ -55,7 +60,7 @@ describe("FreshEntriesLoader", () => {
   it("re-crawls once the TTL has elapsed", async () => {
     const { loader, repository, clock } = setUp();
     await repository.replaceAll(STORED_ENTRIES, START);
-    clock.advance(TTL_MS);
+    clock.advance(CRAWL_TTL_MS);
 
     await expect(loader.load()).resolves.toEqual({
       entries: CRAWLED_ENTRIES,
@@ -82,7 +87,7 @@ describe("FreshEntriesLoader", () => {
   it("keeps stored entries when a crawl fails and retries on the next request", async () => {
     const { loader, source, repository, clock } = setUp();
     await repository.replaceAll(STORED_ENTRIES, START);
-    clock.advance(TTL_MS);
+    clock.advance(CRAWL_TTL_MS);
     source.fetchTopEntries.mockRejectedValueOnce(new Error("HTTP 503"));
 
     await expect(loader.load()).rejects.toThrow("HTTP 503");

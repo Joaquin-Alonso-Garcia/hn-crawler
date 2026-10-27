@@ -6,6 +6,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    unstubGlobals: true,
     projects: [
       {
         extends: true,

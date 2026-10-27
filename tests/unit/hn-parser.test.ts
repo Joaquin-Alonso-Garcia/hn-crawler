@@ -1,14 +1,9 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   FRONT_PAGE_ENTRY_LIMIT,
   parseHackerNewsEntries,
 } from "@/src/infrastructure/scraper/hn-parser";
-
-const fixtureHtml = readFileSync(
-  new URL("../fixtures/hn-front-page.html", import.meta.url),
-  "utf8",
-);
+import { FRONT_PAGE_HTML } from "../helpers/front-page-fixture";
 
 function buildStoryRows(rank: number, title: string, subtext: string): string {
   return `
@@ -25,7 +20,7 @@ function buildPage(rows: string[]): string {
 
 describe("parseHackerNewsEntries", () => {
   describe("against a saved front page snapshot", () => {
-    const entries = parseHackerNewsEntries(fixtureHtml);
+    const entries = parseHackerNewsEntries(FRONT_PAGE_HTML);
 
     it("returns the 30 front page entries in rank order", () => {
       expect(entries).toHaveLength(FRONT_PAGE_ENTRY_LIMIT);

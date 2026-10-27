@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SWRConfig } from "swr";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { EntriesDashboard } from "@/components/entries-dashboard";
 import type { EntriesResponse } from "@/lib/entries-api";
 import type { Entry } from "@/src/domain/entry";
@@ -59,10 +59,6 @@ function renderDashboard() {
 }
 
 describe("EntriesDashboard", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   it("shows a loading state, then every front page story", async () => {
     stubApi();
     renderDashboard();

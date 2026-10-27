@@ -1,21 +1,11 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   fetchHackerNewsHtml,
   HACKER_NEWS_URL,
 } from "@/src/infrastructure/scraper/hn-fetcher";
-
-function stubFetchResponse(body: string, status: number) {
-  const fetchMock = vi.fn().mockResolvedValue(new Response(body, { status }));
-  vi.stubGlobal("fetch", fetchMock);
-
-  return fetchMock;
-}
+import { stubFetchResponse } from "../helpers/stub-fetch";
 
 describe("fetchHackerNewsHtml", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   it("returns the front page HTML with a timeout attached", async () => {
     const fetchMock = stubFetchResponse("<html>front page</html>", 200);
 

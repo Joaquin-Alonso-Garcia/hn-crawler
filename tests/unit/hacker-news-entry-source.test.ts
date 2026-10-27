@@ -1,33 +1,19 @@
-import { readFileSync } from "node:fs";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { EntrySourceError } from "@/src/domain/entry-source";
 import { HackerNewsEntrySource } from "@/src/infrastructure/scraper/hacker-news-entry-source";
-
-const fixtureHtml = readFileSync(
-  new URL("../fixtures/hn-front-page.html", import.meta.url),
-  "utf8",
-);
-
-function stubFetchResponse(body: string, status: number) {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn().mockResolvedValue(new Response(body, { status })),
-  );
-}
+import { FRONT_PAGE_ENTRY_LIMIT } from "@/src/infrastructure/scraper/hn-parser";
+import { FRONT_PAGE_HTML } from "../helpers/front-page-fixture";
+import { stubFetchResponse } from "../helpers/stub-fetch";
 
 describe("HackerNewsEntrySource", () => {
   const source = new HackerNewsEntrySource();
 
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   it("fetches and parses the front page entries", async () => {
-    stubFetchResponse(fixtureHtml, 200);
+    stubFetchResponse(FRONT_PAGE_HTML, 200);
 
     const entries = await source.fetchTopEntries();
 
-    expect(entries).toHaveLength(30);
+    expect(entries).toHaveLength(FRONT_PAGE_ENTRY_LIMIT);
     expect(entries[0].title).toBe("Dolly Parton's Imagination Library");
   });
 

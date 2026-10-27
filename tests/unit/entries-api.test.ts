@@ -1,13 +1,7 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { entriesUrl, fetchEntries } from "@/lib/entries-api";
 import { FilterType } from "@/src/domain/filters/filter-type";
-
-function stubFetchResponse(body: string, status: number) {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn().mockResolvedValue(new Response(body, { status })),
-  );
-}
+import { stubFetchResponse } from "../helpers/stub-fetch";
 
 describe("entriesUrl", () => {
   it.each([
@@ -19,10 +13,6 @@ describe("entriesUrl", () => {
 });
 
 describe("fetchEntries", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   it("returns the parsed body on success", async () => {
     stubFetchResponse('{"entries":[],"appliedFilter":"none"}', 200);
 

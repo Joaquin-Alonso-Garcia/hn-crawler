@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { FreshEntriesLoader } from "@/src/application/fresh-entries-loader";
 import { GetEntriesUseCase } from "@/src/application/get-entries-use-case";
+import { CRAWL_TTL_MS } from "@/src/config";
 import type { Entry } from "@/src/domain/entry";
 import { FilterType, NO_FILTER } from "@/src/domain/filters/filter-type";
 import { FakeClock } from "../fakes/fake-clock";
 import { InMemoryEntryRepository } from "../fakes/in-memory-entry-repository";
 import { InMemoryUsageLogRepository } from "../fakes/in-memory-usage-log-repository";
 
-const TTL_MS = 15 * 60 * 1000;
 const CRAWL_DURATION_MS = 120;
 const START = new Date("2026-10-26T10:00:00.000Z");
 
@@ -56,7 +56,7 @@ function setUp() {
     new InMemoryEntryRepository(),
     source,
     clock.now,
-    TTL_MS,
+    CRAWL_TTL_MS,
   );
   const useCase = new GetEntriesUseCase(loader, usageLogRepository, clock.now);
 

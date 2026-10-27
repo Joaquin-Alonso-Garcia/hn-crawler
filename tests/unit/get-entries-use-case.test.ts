@@ -3,7 +3,9 @@ import { FreshEntriesLoader } from "@/src/application/fresh-entries-loader";
 import { GetEntriesUseCase } from "@/src/application/get-entries-use-case";
 import { CRAWL_TTL_MS } from "@/src/config";
 import type { Entry } from "@/src/domain/entry";
+import { EntrySourceError } from "@/src/domain/entry-source";
 import { FilterType, NO_FILTER } from "@/src/domain/filters/filter-type";
+import { UsageOutcome } from "@/src/domain/usage-log";
 import { FakeClock } from "../fakes/fake-clock";
 import { InMemoryEntryRepository } from "../fakes/in-memory-entry-repository";
 import { InMemoryUsageLogRepository } from "../fakes/in-memory-usage-log-repository";
@@ -42,16 +44,27 @@ const ENTRIES = [
   longTitleMostComments,
 ];
 
-function setUp() {
+type Crawl = (clock: FakeClock) => Promise<Entry[]>;
+
+function crawlReturning(entries: Entry[]): Crawl {
+  return async (clock) => {
+    clock.advance(CRAWL_DURATION_MS);
+
+    return entries;
+  };
+}
+
+function crawlFailingWith(error: Error): Crawl {
+  return async (clock) => {
+    clock.advance(CRAWL_DURATION_MS);
+    throw error;
+  };
+}
+
+function setUp(crawl: Crawl = crawlReturning(ENTRIES)) {
   const clock = new FakeClock(START);
   const usageLogRepository = new InMemoryUsageLogRepository();
-  const source = {
-    fetchTopEntries: async () => {
-      clock.advance(CRAWL_DURATION_MS);
-
-      return ENTRIES;
-    },
-  };
+  const source = { fetchTopEntries: () => crawl(clock) };
   const loader = new FreshEntriesLoader(
     new InMemoryEntryRepository(),
     source,
@@ -99,6 +112,7 @@ describe("GetEntriesUseCase", () => {
         resultCount: 2,
         durationMs: CRAWL_DURATION_MS,
         triggeredCrawl: true,
+        outcome: UsageOutcome.Success,
       },
       {
         timestamp: new Date(START.getTime() + CRAWL_DURATION_MS),
@@ -106,7 +120,40 @@ describe("GetEntriesUseCase", () => {
         resultCount: ENTRIES.length,
         durationMs: 0,
         triggeredCrawl: false,
+        outcome: UsageOutcome.Success,
       },
     ]);
   });
+
+  it.each([
+    [
+      "Hacker News is unavailable",
+      new EntrySourceError("HTTP 503"),
+      UsageOutcome.SourceUnavailable,
+      true,
+    ],
+    [
+      "anything else fails",
+      new Error("database locked"),
+      UsageOutcome.Error,
+      false,
+    ],
+  ])(
+    "records a failed request when %s, then rethrows",
+    async (_case, error, outcome, triggeredCrawl) => {
+      const { useCase, usageLogRepository } = setUp(crawlFailingWith(error));
+
+      await expect(useCase.execute(FilterType.ShortTitles)).rejects.toBe(error);
+      expect(usageLogRepository.logs).toEqual([
+        {
+          timestamp: START,
+          appliedFilter: FilterType.ShortTitles,
+          resultCount: 0,
+          durationMs: CRAWL_DURATION_MS,
+          triggeredCrawl,
+          outcome,
+        },
+      ]);
+    },
+  );
 });

@@ -14,6 +14,7 @@ describe("PrismaUsageLogRepository", () => {
       resultCount: 12,
       durationMs: 85,
       triggeredCrawl: true,
+      outcome: "source-unavailable",
     };
 
     await repository.record(log);

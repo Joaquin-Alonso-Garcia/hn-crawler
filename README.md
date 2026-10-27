@@ -117,17 +117,18 @@ flowchart LR
 
 **SQLite via Prisma.** Zero setup for a reviewer, with real migrations in the repo. Every row of a crawl shares one `crawledAt` timestamp, which serves both as the batch identifier and as the staleness check. Replacing a batch is one transaction (`deleteMany` + `createMany`), so readers never see half a crawl.
 
-**Usage data.** Every successful request writes a `UsageLog` row:
+**Usage data.** Every request that reaches the use case writes a `UsageLog` row, whether it succeeds or fails, so crawler failures leave a trace:
 
-| Field            | Purpose                                                                        |
-| ---------------- | ------------------------------------------------------------------------------ |
-| `timestamp`      | When the request started                                                       |
-| `appliedFilter`  | `none`, `long-titles` or `short-titles`                                        |
-| `resultCount`    | Number of entries returned                                                     |
-| `durationMs`     | Time spent serving the request                                                 |
-| `triggeredCrawl` | Whether this request had to wait for a crawl, its own or one already in flight |
+| Field            | Purpose                                                                                             |
+| ---------------- | --------------------------------------------------------------------------------------------------- |
+| `timestamp`      | When the request started                                                                            |
+| `appliedFilter`  | `none`, `long-titles` or `short-titles`                                                             |
+| `resultCount`    | Number of entries returned (`0` on failure)                                                         |
+| `durationMs`     | Time spent serving the request                                                                      |
+| `triggeredCrawl` | Whether this request had to wait for a crawl, its own or one already in flight (or one that failed) |
+| `outcome`        | `success`, `source-unavailable` (Hacker News failed, `502`) or `error` (anything else, `500`)       |
 
-Run `npx prisma studio` to browse it. Requests rejected with `400` are not logged, because they never reach the use case.
+Run `npx prisma studio` to browse it. Requests with an unknown filter are rejected with `400` at the HTTP boundary and are not logged: no work was done and no filter was applied, and logging them would mean storing arbitrary user input.
 
 **UI.** SWR fetches on mount and uses each filter's URL as its cache key. `keepPreviousData` keeps the current table visible (dimmed) while the next filter loads, which also means a slow, outdated response can never overwrite the view you selected. The page has a loading skeleton, an error banner with Retry that keeps the last good data visible, an empty state, and accessibility markup (`aria-pressed`, `aria-sort`, live regions). On small screens the word count moves under each title so the sorted column always fits.
 

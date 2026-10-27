@@ -26,4 +26,5 @@ model UsageLog {
   resultCount    Int
   durationMs     Int
   triggeredCrawl Boolean
+  outcome        String   @default("success")
 }

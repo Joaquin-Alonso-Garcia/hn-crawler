@@ -11,7 +11,8 @@ export default function Home() {
           The Hacker News front page, filtered by title length
         </h1>
         <p className="max-w-2xl text-zinc-600 dark:text-zinc-400">
-          The top 30 stories, split by title length. Words are counted by spaces, ignoring standalone symbols.
+          The top 30 stories, split by title length. Words are counted by
+          spaces, ignoring standalone symbols.
         </p>
       </header>
       <EntriesDashboard />

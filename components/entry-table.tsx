@@ -33,7 +33,7 @@ function EntryRow({ entry }: { entry: Entry }) {
     <tr className="hover:bg-zinc-50 dark:hover:bg-zinc-900/60">
       <td className={`${NUMBER_CELL} text-zinc-400`}>{entry.rank}</td>
       <td className={`${CELL} font-medium text-zinc-900 dark:text-zinc-100`}>
-        {entry.title}
+        <span>{entry.title}</span>
         <span className="block text-xs font-normal text-zinc-500 sm:hidden">
           {wordCount} words
         </span>

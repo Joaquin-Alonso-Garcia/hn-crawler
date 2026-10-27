@@ -4,11 +4,11 @@ A Next.js app that crawls the first 30 entries of [Hacker News](https://news.yco
 
 ![Long titles view, sorted by comments](docs/screenshot.jpg)
 
-| View         | Rule                                 | Order                    |
-| ------------ | ------------------------------------ | ------------------------ |
-| All stories  | All 30 entries                       | Front page rank          |
-| Long titles  | Titles with **more than five** words | Number of comments, desc |
-| Short titles | Titles with **five or fewer** words  | Points, desc             |
+| View         | Rule                                 | Order                                  |
+| ------------ | ------------------------------------ | -------------------------------------- |
+| All stories  | All 30 entries                       | Front page rank                        |
+| Long titles  | Titles with **more than five** words | Number of comments, desc, ties by rank |
+| Short titles | Titles with **five or fewer** words  | Points, desc, ties by rank             |
 
 Words are counted by spaces, ignoring standalone symbols: `This is - a self-explained example` has 5 words.
 
@@ -109,7 +109,9 @@ flowchart LR
 
 **Strategy pattern for filters.** Each filter is a class implementing `FilterStrategy`: it declares its `sortField` and applies it in `apply(entries)`, and the UI reads the same field for its sort indicator, so the two cannot disagree. A registry typed as `Record<FilterType, FilterStrategy>` maps the query parameter to its strategy. Adding a filter means adding one value, one class, and one UI label, and the build fails if the class or the label is missing. Long and short titles are defined from the same constant (`> 5` and `<= 5`), so every entry lands in exactly one filter.
 
-**Word counting.** Split on whitespace and keep tokens that contain at least one letter or digit, using Unicode classes (`\p{L}\p{N}`) so titles like `Café` or `日本語` count correctly. Hyphenated words stay single words, punctuation attached to a word keeps the word, and standalone symbols (`-`, `|`, `—`) are dropped.
+**Ties keep the front page order.** When two entries have the same number of comments (or points), the one Hacker News ranked higher comes first. HN's rank already combines votes and recency, so it's a more meaningful tie-breaker than a second numeric field, and it matches the order readers already see. It follows from a stable sort over entries stored in rank order, and a test pins it.
+
+**Word counting.** Split on whitespace and keep tokens that contain at least one letter or digit, using Unicode classes (`\p{L}\p{N}`) so titles like `Café` or `日本語` count correctly. Hyphenated words stay single words, punctuation attached to a word keeps the word, and standalone symbols (`-`, `|`, `—`) are dropped. Tokens like `C++` or `$5` count as words because they contain a letter or digit, while a token made only of emoji is dropped.
 
 **Repositories behind interfaces.** The use cases depend on `EntryRepository` and `UsageLogRepository` from the domain layer, never on Prisma. Production uses Prisma implementations; unit tests use in-memory fakes of the same interfaces.
 
@@ -117,13 +119,13 @@ flowchart LR
 
 **Usage data.** Every successful request writes a `UsageLog` row:
 
-| Field            | Purpose                                       |
-| ---------------- | --------------------------------------------- |
-| `timestamp`      | When the request started                      |
-| `appliedFilter`  | `none`, `long-titles` or `short-titles`       |
-| `resultCount`    | Number of entries returned                    |
-| `durationMs`     | Time spent serving the request                |
-| `triggeredCrawl` | Whether this request had to crawl Hacker News |
+| Field            | Purpose                                                                        |
+| ---------------- | ------------------------------------------------------------------------------ |
+| `timestamp`      | When the request started                                                       |
+| `appliedFilter`  | `none`, `long-titles` or `short-titles`                                        |
+| `resultCount`    | Number of entries returned                                                     |
+| `durationMs`     | Time spent serving the request                                                 |
+| `triggeredCrawl` | Whether this request had to wait for a crawl, its own or one already in flight |
 
 Run `npx prisma studio` to browse it. Requests rejected with `400` are not logged, because they never reach the use case.
 
@@ -141,7 +143,7 @@ No test calls the live site. The parser runs against `tests/fixtures/hn-front-pa
 
 ## Commit history
 
-Every commit is one step: scaffold → schema → word count → scraper → repositories → filters → use case → API → UI → tests → docs. Messages follow `<type>: <subject>` (`feat`, `fix`, `test`, `chore`, `docs`, `style`).
+The history is incremental: scaffold → schema → word count → scraper → repositories → filters → use case → API → UI → tests → docs, with each feature landing together with its tests. It ends with the fixes and refactors from a final self-review. Messages follow `<type>: <subject>` (`feat`, `fix`, `refactor`, `test`, `chore`, `docs`, `style`).
 
 ## Limitations and next steps
 
